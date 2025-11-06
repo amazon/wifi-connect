@@ -10,6 +10,7 @@ pub fn start_dnsmasq(config: &Config, device: &Device) -> Result<Child> {
         &format!("--address=/#/{}", config.gateway),
         &format!("--dhcp-range={}", config.dhcp_range),
         &format!("--dhcp-option=option:router,{}", config.gateway),
+        &format!("--dhcp-option=option:captive-portal,http://{}:{}/", config.gateway, config.listening_port),
         &format!("--interface={}", device.interface()),
         "--keep-in-foreground",
         "--bind-interfaces",
