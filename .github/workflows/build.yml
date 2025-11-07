@@ -17,7 +17,7 @@ jobs:
         override: true
 
     - name: Install rustup
-      run: apt install rustup -y
+      run: sudo apt install rustup -y
 
     - name: update rust
       run: rustup update stable
