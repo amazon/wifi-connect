@@ -1,38 +1,41 @@
-name: Cross-compile Rust for AArch64
+name: Build wifi-connect (Linux aarch64)
 
 on: [push, pull_request]
 
 jobs:
   build:
-    runs-on: ubuntu-latest # Or another x86-64 runner
+    runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Install Rust toolchain
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        profile: minimal
-        override: true
+      - name: Prepare cargo cache directories
+        run: mkdir -p .cache/cargo/{registry,git}
 
-    - name: Install rustup
-      run: sudo apt install rustup -y
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            .cache/cargo/registry
+            .cache/cargo/git
+          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
 
-    - name: update rust
-      run: rustup update stable
+      - name: Build helper image
+        run: docker build --tag wifi-connect-builder -f Dockerfile .
 
-    - name: Install cross-rs
-      run: cargo install cross --git https://github.com/cross-rs/cross
+      - name: Build wifi-connect for aarch64
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}":/workspace \
+            -v "${{ github.workspace }}/.cache/cargo/registry":/usr/local/cargo/registry \
+            -v "${{ github.workspace }}/.cache/cargo/git":/usr/local/cargo/git \
+            -w /workspace \
+            wifi-connect-builder aarch64-unknown-linux-gnu
 
-    - name: Add aarch64 target
-      run: rustup target add aarch64-unknown-linux-gnu
-
-    - name: Cross-compile for aarch64
-      run: cross build --release --target aarch64-unknown-linux-gnu
-
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: my-app-aarch64
-        path: target/aarch64-unknown-linux-gnu/release/wifi-connect
+      - name: Upload wifi-connect binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: wifi-connect-linux-aarch64
+          path: target/aarch64-unknown-linux-gnu/release/wifi-connect

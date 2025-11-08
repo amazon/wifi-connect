@@ -60,6 +60,19 @@ Installation
 
 WiFi Connect is designed to work on systems like Raspbian or Debian, or run in a docker container on top of balenaOS.
 
+### Building locally
+
+The repository provides a Docker-based build helper through the `Justfile`. To speed up subsequent builds, the helper mounts a persistent cargo cache under `.cache/cargo`. The `just build` recipe creates the directories for you if they do not exist, but you can also prepare them manually:
+
+```bash
+mkdir -p .cache/cargo/{registry,git}
+just build                    # defaults to x86_64-unknown-linux-gnu
+just build -- aarch64-unknown-linux-gnu
+just build -- armv7-unknown-linux-gnueabihf
+```
+
+Artifacts are written to `target/<triple>/release`. Clean builds with `just clean`.
+
 ### Raspbian/Debian Stretch
 
 WiFi Connect depends on NetworkManager, but by default Raspbian Stretch uses dhcpcd as a network manager. The provided installation shell script disables dhcpcd, installs NetworkManager as the active network manager and downloads and installs WiFi Connect.
