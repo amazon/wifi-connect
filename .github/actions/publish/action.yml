@@ -1,30 +1,28 @@
 ---
-name: package and draft GitHub release
-# https://github.com/product-os/flowzone/tree/master/.github/actions
-inputs:
-  json:
-    description: "JSON stringified object containing all the inputs from the calling workflow"
-    required: true
-  secrets:
-    description: "JSON stringified object containing all the secrets from the calling workflow"
-    required: true
-  variables:
-    description: "JSON stringified object containing all the variables from the calling workflow"
-    required: true
+name: build wifi-connect UI artifact
+description: Build the UI tarball used by GitHub releases.
 
-  # --- custom environment
-  NODE_VERSION:
-    type: string
+inputs:
+  node-version:
+    description: Node.js version to use for the UI build.
+    required: false
     default: "20.x"
+  upload-artifact:
+    description: Set to true to upload the built tarball as a workflow artifact.
+    required: false
+    default: "false"
+  artifact-name:
+    description: Name to use when uploading the workflow artifact.
+    required: false
+    default: "wifi-connect-ui"
 
 runs:
-  # https://docs.github.com/en/actions/creating-actions/creating-a-composite-action
-  using: "composite"
-  steps:    
+  using: composite
+  steps:
     - name: Setup Node.js
-      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      uses: actions/setup-node@v4
       with:
-        node-version: ${{ inputs.NODE_VERSION }}
+        node-version: ${{ inputs.node-version }}
 
     - name: Install dependencies
       shell: bash
@@ -41,10 +39,12 @@ runs:
       run: |
         cd ./ui
         npm run build
-        tar --auto-compress -cvf wifi-connect-ui.tar.gz  -C build .
+        tar --auto-compress -cvf wifi-connect-ui.tar.gz -C build .
 
-    - name: Upload artifacts
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+    - name: Upload artifact
+      if: inputs.upload-artifact == 'true'
+      uses: actions/upload-artifact@v4
       with:
-        name: gh-release-wifi-connect-ui-${{ github.event.pull_request.head.sha || github.event.head_commit.id }}-${{ strategy.job-index }}
+        name: ${{ inputs.artifact-name }}
         path: ./ui/wifi-connect-ui.tar.gz
+        retention-days: 7
