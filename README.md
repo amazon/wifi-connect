@@ -110,10 +110,14 @@ This repository no longer depends on Flowzone. Releases are handled with repo-ow
 
 Run the `Prepare Version` workflow from the Actions tab. It installs `versionist` and `balena-versionist`, updates the versioned files, and opens or refreshes a release PR.
 
+GitHub only allows `workflow_dispatch` runs for workflow files that already exist on the default branch. Before this workflow is merged, you can still test it from a feature branch by pushing changes to that branch. The workflow now supports a push-triggered dry-run mode on non-default branches, which computes the version bump and uploads a patch artifact without creating a PR.
+
 The workflow updates these files:
 - `Cargo.toml`
 - `CHANGELOG.md`
 - `.versionbot/CHANGELOG.yml`
+
+Dry-run mode is for validating the workflow on a feature branch. PR creation only happens for `workflow_dispatch` runs.
 
 ### Publish a release
 
