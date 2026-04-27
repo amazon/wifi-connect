@@ -140,7 +140,7 @@ If the GitHub release already exists, the workflow uploads the assets to it. Oth
 The CI workflows are pinned to Rust `1.76`. To match that locally, install the toolchain and the components used by CI with:
 
 ```bash
-rustup toolchain install 1.76.0 --component rustfmt --component clippy --component rust-src
+rustup toolchain install 1.76.0 --component rustfmt --component clippy
 rustup override set 1.76.0
 ```
 
