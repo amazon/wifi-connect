@@ -54,6 +54,18 @@ jobs:
       - name: Install cross
         run: cargo install cross --locked
 
+      - name: Configure cross for act
+        run: |
+          if [[ "${ACT:-}" == "true" ]]; then
+            container_id="$(grep -oE '/var/lib/docker/containers/[0-9a-f]{64}' /proc/self/mountinfo | head -n 1 | sed 's#.*/##')"
+
+            echo "CROSS_CONTAINER_IN_CONTAINER=true" >> "$GITHUB_ENV"
+
+            if [[ -n "${container_id}" ]]; then
+              echo "HOSTNAME=${container_id}" >> "$GITHUB_ENV"
+            fi
+          fi
+
       - name: Lint with clippy
         run: cross clippy --all-targets --all-features --target ${{ matrix.target }} -- -D warnings
 
