@@ -135,6 +135,17 @@ The `Release Assets` workflow then builds these release artifacts:
 
 If the GitHub release already exists, the workflow uploads the assets to it. Otherwise, the assets remain attached to the workflow run for manual upload.
 
+### Local Rust toolchain setup
+
+The CI workflows are pinned to Rust `1.76`. To match that locally, install the toolchain and the components used by CI with:
+
+```bash
+rustup toolchain install 1.76.0 --component rustfmt --component clippy --component rust-src
+rustup override set 1.76.0
+```
+
+If you do not want a repository-local override, run commands with `+1.76.0` instead, for example `cargo +1.76.0 fmt` or `cross +1.76.0 test --target aarch64-unknown-linux-gnu`.
+
 ### Local release builds
 
 Local cross-platform release builds use `cross`, which provides the same Docker-backed build environment used in CI.
@@ -152,6 +163,18 @@ Build a subset of targets or include the UI tarball:
 scripts/local-build.sh x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu
 scripts/local-build.sh --ui
 ```
+
+### Local CI runs with act
+
+The Rust CI jobs can also be exercised locally with `act`. Because the workflow uses `cross` with a `Cross.toml` pre-build step, `act` must run in bind-mount mode so the nested Docker build sees a real host workspace path.
+
+Run the Rust checks job for a single target with:
+
+```bash
+act -b pull_request -W .github/workflows/ci.yml -j rust-checks --matrix target:aarch64-unknown-linux-gnu
+```
+
+The `-b` flag is required for these `cross`-backed jobs. Running `act` without bind mode can fail when `cross` tries to build its custom image for the target.
 
 ***
 
