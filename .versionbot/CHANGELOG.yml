@@ -1,4 +1,17 @@
 - commits:
+    - subject: "chore: prepare v5.0.0 re-release"
+      hash: faf78fb1bfea99541c2e8d516d4c7f8a87d8061b
+      body: |
+        No functional changes; release metadata only.
+      footer:
+        Change-type: major
+        change-type: major
+      author: Sergey Tuchkin
+      nested: []
+  version: 5.0.0
+  title: ""
+  date: 2026-04-27T17:24:27.905Z
+- commits:
     - subject: "patch: Replace balenalib with Docker Official image"
       hash: dd25ac50cf1170f06fe6745cb8bcbd8e9eb9648a
       body: ""
