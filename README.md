@@ -5,7 +5,7 @@
 WiFi Connect is a utility for dynamically setting the WiFi configuration on a Linux device via a captive portal. WiFi credentials are specified by connecting with a mobile phone or laptop to the access point that WiFi Connect creates.
 
 [![Current Release](https://img.shields.io/github/release/balena-io/wifi-connect.svg?style=flat-square)](https://github.com/balena-io/wifi-connect/releases/latest)
-[![CircleCI status](https://img.shields.io/circleci/project/github/balena-io/wifi-connect.svg?style=flat-square)](https://circleci.com/gh/balena-io/wifi-connect)
+[![GitHub Actions status](https://img.shields.io/github/actions/workflow/status/balena-os/wifi-connect/ci.yml?branch=master&style=flat-square)](https://github.com/balena-os/wifi-connect/actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/balena-io/wifi-connect.svg?style=flat-square)](https://github.com/balena-io/wifi-connect/blob/master/LICENSE)
 [![Issues](https://img.shields.io/github/issues/balena-io/wifi-connect.svg?style=flat-square)](https://github.com/balena-io/wifi-connect/issues)
 
@@ -97,6 +97,60 @@ services:
         environment:
             DBUS_SYSTEM_BUS_ADDRESS: "unix:path=/host/run/dbus/system_bus_socket"
     ...
+```
+
+***
+
+Release workflow
+----------------
+
+This repository no longer depends on Flowzone. Releases are handled with repo-owned GitHub Actions workflows.
+
+### Prepare a release PR
+
+Run the `Prepare Version` workflow from the Actions tab. It installs `versionist` and `balena-versionist`, updates the versioned files, and opens or refreshes a release PR.
+
+GitHub only allows `workflow_dispatch` runs for workflow files that already exist on the default branch. Before this workflow is merged, you can still test it from a feature branch by pushing changes to that branch. The workflow now supports a push-triggered dry-run mode on non-default branches, which computes the version bump and uploads a patch artifact without creating a PR.
+
+The workflow updates these files:
+- `Cargo.toml`
+- `CHANGELOG.md`
+- `.versionbot/CHANGELOG.yml`
+
+Dry-run mode is for validating the workflow on a feature branch. PR creation only happens for `workflow_dispatch` runs.
+
+### Publish a release
+
+After the release PR is merged:
+- create the matching git tag in the `vX.Y.Z` format
+- create or update the GitHub release for that tag
+- push the tag
+
+The `Release Assets` workflow then builds these release artifacts:
+- `wifi-connect-aarch64-unknown-linux-gnu.tar.gz`
+- `wifi-connect-armv7-unknown-linux-gnueabihf.tar.gz`
+- `wifi-connect-x86_64-unknown-linux-gnu.tar.gz`
+- `wifi-connect-i686-unknown-linux-gnu.tar.gz`
+- `wifi-connect-ui.tar.gz`
+
+If the GitHub release already exists, the workflow uploads the assets to it. Otherwise, the assets remain attached to the workflow run for manual upload.
+
+### Local release builds
+
+Local cross-platform release builds use `cross`, which provides the same Docker-backed build environment used in CI.
+
+Build the default Rust release matrix locally:
+
+```bash
+cargo install cross --locked
+scripts/local-build.sh
+```
+
+Build a subset of targets or include the UI tarball:
+
+```bash
+scripts/local-build.sh x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu
+scripts/local-build.sh --ui
 ```
 
 ***
