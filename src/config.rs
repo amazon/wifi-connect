@@ -25,9 +25,13 @@ pub struct Config {
     pub ui_directory: PathBuf,
 }
 
+fn display_version() -> &'static str {
+    option_env!("WIFI_CONNECT_DISPLAY_VERSION").unwrap_or(crate_version!())
+}
+
 pub fn get_config() -> Config {
     let matches = App::new(crate_name!())
-        .version(crate_version!())
+        .version(display_version())
         .author(crate_authors!())
         .about(crate_description!())
         .arg(
