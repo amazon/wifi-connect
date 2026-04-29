@@ -46,7 +46,17 @@ jobs:
       - name: Extract release notes
         run: bash scripts/extract-release-notes.sh "${GITHUB_REF_NAME}" > "$RUNNER_TEMP/release-notes.md"
 
+      - name: Decide release-notes upload mode
+        id: release_notes_upload
+        run: |
+          if [[ "${ACT:-}" == "true" ]]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Upload release notes
+        if: steps.release_notes_upload.outputs.enabled == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: release-notes
@@ -56,9 +66,6 @@ jobs:
   rust-assets:
     name: Rust asset (${{ matrix.target }})
     needs: metadata
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -67,30 +74,12 @@ jobs:
           - armv7-unknown-linux-gnueabihf
           - x86_64-unknown-linux-gnu
           - i686-unknown-linux-gnu
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@1.76
-        with:
-          targets: ${{ matrix.target }}
-
-      - name: Install cross
-        run: cargo install cross --locked
-
-      - name: Install LLVM tools
-        run: sudo apt-get update && sudo apt-get install -y llvm
-
-      - name: Build release tarball
-        run: bash scripts/build-rust-release-asset.sh "${{ matrix.target }}"
-
-      - name: Upload release tarball
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-${{ matrix.target }}
-          path: wifi-connect-${{ matrix.target }}.tar.gz
-          retention-days: 7
+    permissions:
+      contents: read
+    uses: ./.github/workflows/rust-asset.yml
+    with:
+      target: ${{ matrix.target }}
+      artifact-name: release-${{ matrix.target }}
 
   ui-asset:
     name: UI asset

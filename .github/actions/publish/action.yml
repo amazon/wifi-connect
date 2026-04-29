@@ -41,8 +41,18 @@ runs:
         npm run build
         tar --auto-compress -cvf wifi-connect-ui.tar.gz -C build .
 
+    - name: Decide artifact upload mode
+      id: upload_mode
+      shell: bash
+      run: |
+        if [[ "${{ inputs.upload-artifact }}" != "true" || "${ACT:-}" == "true" ]]; then
+          echo "enabled=false" >> "$GITHUB_OUTPUT"
+        else
+          echo "enabled=true" >> "$GITHUB_OUTPUT"
+        fi
+
     - name: Upload artifact
-      if: inputs.upload-artifact == 'true'
+      if: steps.upload_mode.outputs.enabled == 'true'
       uses: actions/upload-artifact@v4
       with:
         name: ${{ inputs.artifact-name }}

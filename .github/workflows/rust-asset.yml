@@ -1,0 +1,68 @@
+name: Rust Asset
+
+on:
+  workflow_call:
+    inputs:
+      target:
+        required: true
+        type: string
+      artifact-name:
+        required: true
+        type: string
+      upload-artifact:
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  rust-asset:
+    name: Rust asset
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@1.76
+        with:
+          targets: ${{ inputs.target }}
+
+      - name: Install cross
+        run: cargo install cross --locked
+
+      - name: Configure cross for act
+        run: |
+          if [[ "${ACT:-}" == "true" ]]; then
+            container_id="$(grep -oE '/var/lib/docker/containers/[0-9a-f]{64}' /proc/self/mountinfo | head -n 1 | sed 's#.*/##')"
+
+            echo "CROSS_CONTAINER_IN_CONTAINER=true" >> "$GITHUB_ENV"
+
+            if [[ -n "${container_id}" ]]; then
+              echo "HOSTNAME=${container_id}" >> "$GITHUB_ENV"
+            fi
+          fi
+
+      - name: Install LLVM tools
+        run: sudo apt-get update && sudo apt-get install -y llvm
+
+      - name: Build release tarball
+        run: bash scripts/build-rust-release-asset.sh "${{ inputs.target }}"
+
+      - name: Decide artifact upload mode
+        id: artifact_upload
+        run: |
+          if [[ "${{ inputs.upload-artifact }}" != "true" || "${ACT:-}" == "true" ]]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload release tarball
+        if: steps.artifact_upload.outputs.enabled == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact-name }}
+          path: wifi-connect-${{ inputs.target }}.tar.gz
+          retention-days: 7
